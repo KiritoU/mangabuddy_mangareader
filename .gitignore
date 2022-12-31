@@ -1,0 +1,11 @@
+venv
+__pycache__
+.vscode
+sql
+anti*
+Archive*
+failed.txt
+query*
+test*
+settings*
+generate_chapter_number.py

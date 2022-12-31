@@ -1,0 +1,36 @@
+yum install -y tmux
+
+Python 3.9
+https://phoenixnap.com/kb/how-to-install-python-3-centos-7
+Go to Option 2: Install Python From Source Code
+
+- make folder (mangabuddy)
+mkdir mangabuddy
+
+cd mangabuddy
+
+- copy files to the server (scp or alternative)
+
+python3.9 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+- edit settings
+
+----------- Update latest -----------------
+tmux new -s update
+(cd to mangabuddy if needed)
+(if terminal doesn't start with (venv) -> source venv/bin/activate)
+python run_update.py
+
+
+----------- Crawl latest -----------------
+tmux new -s crawl
+(cd to mangabuddy if needed)
+(if terminal doesn't start with (venv) -> source venv/bin/activate)
+python run_crawl.py
+
+___________ tmux in nutshell ________
+
+Attach to session: tmux a -t update (name of the session)
+Dettach session: Ctrl+B D
