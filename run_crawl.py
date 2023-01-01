@@ -1,16 +1,27 @@
 import logging
 import time
+import threading
 
 from settings import CONFIG
-from base import Crawler_Site
+from base import Crawler
 
 logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=logging.INFO)
 
-UPDATE = Crawler_Site()
+crawler = Crawler()
 
 if __name__ == "__main__":
-    pages = CONFIG.MANGABUDDY_LAST_PAGE
+    page = 2
     while True:
-        for i in range(pages, 1, -1):
-            UPDATE.crawl_page(f"{CONFIG.MANGABUDDY_LATEST_PAGE}?page={i}")
-            time.sleep(CONFIG.WAIT_BETWEEN_ALL)
+        if threading.active_count() > CONFIG.MAX_THREAD:
+            continue
+
+        threading.Thread(
+            target=crawler.crawl_page,
+            args=(f"{CONFIG.MANGABUDDY_LATEST_PAGE}?page={page}",),
+        ).start()
+
+        page += 1
+        if page > CONFIG.MANGABUDDY_LAST_PAGE:
+            page = 2
+
+        time.sleep(CONFIG.WAIT_BETWEEN_ALL)

@@ -1,3 +1,4 @@
+import logging
 import requests
 import time
 
@@ -9,6 +10,7 @@ from slugify import slugify
 from _db import database
 from _image import combine_image, convert_image_to_jpg
 
+logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=logging.INFO)
 # from generate_chapter_number import get_chapter_number_from
 
 from settings import CONFIG
@@ -32,6 +34,7 @@ class Helper:
             print(f"{msg}\n{'-' * 80}", file=f)
 
     def download_url(self, url):
+        logging.info(f"Getting URL: {url}")
         return requests.get(url, headers=self.get_header())
 
     def custom_split(self, text: str, delimiter: str) -> str:
@@ -123,7 +126,7 @@ class Helper:
 
                 imgSrc = self.generate_img_src(savedImage)
                 res.append(
-                    f'"{i+1}"' + ':{"src":' + f'"{imgSrc}","mime":"image/jpeg"' + "}"
+                    f"""<img src="{CONFIG.IMAGE_DOMAIN}{imgSrc}" alt="" class="alignnone size-full" />"""
                 )
             except Exception as e:
                 self.error_log(
@@ -132,7 +135,7 @@ class Helper:
                 )
                 return ""
 
-        return "{" + ",".join(res) + "}"
+        return "".join(res)
 
     def get_timeupdate(self) -> str:
         # TODO: later
@@ -150,7 +153,7 @@ class Helper:
         return res
 
     def format_condition_str(self, equal_condition: str) -> str:
-        return equal_condition.replace("\n", "").strip().lower()
+        return equal_condition.strip("\n").strip().lower()
         # return "%" + equal_condition.strip().replace(" ", "%").lower() + "%"
 
     def insert_author(self, comicId: int, authors: list):
@@ -284,7 +287,7 @@ class Helper:
             0,
             "",
             0,
-            "wp-manga",
+            "manga",
             "",
             0,
             # "",

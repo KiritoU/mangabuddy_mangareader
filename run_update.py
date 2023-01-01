@@ -2,12 +2,12 @@ import logging
 import time
 
 from settings import CONFIG
-from base import Crawler_Site
+from base import Crawler
 
 logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=logging.INFO)
 
 
-UPDATE = Crawler_Site()
+UPDATE = Crawler()
 
 if __name__ == "__main__":
     while True:

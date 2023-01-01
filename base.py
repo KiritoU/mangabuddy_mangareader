@@ -5,17 +5,22 @@ from bs4 import BeautifulSoup
 from slugify import slugify
 
 
-from settings import CONFIG
+from _db import database
+from mangareader import MangaReaderComic, MangaReaderChapter
 from notification import Noti
 from helper import helper
-from _db import database
+from settings import CONFIG
 
 logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=logging.INFO)
 
 
-class Crawler_Site:
+class Crawler:
     def crawl_soup(self, url):
         html = helper.download_url(url)
+
+        if html.status_code == 404:
+            return 404
+
         soup = BeautifulSoup(html.content, "html.parser")
 
         return soup
@@ -32,10 +37,9 @@ class Crawler_Site:
             authors = self.get_p_by_text(metaBox, "author").find_all("a")
             for author in authors:
                 name = author.text.replace("\n", "").replace(",", "").strip()
-                nameSeo = author.get("href").split("/")[-1]
-                res.append([name, nameSeo])
+                res.append(name)
         except Exception:
-            return [["Updating", "updating"]]
+            return ["Updating"]
         return res
 
     def get_status_from(self, metaBox: BeautifulSoup) -> int:
@@ -126,23 +130,27 @@ class Crawler_Site:
     def crawl_comic_chapters(self, name_seo: str):
         chapters_data = []
 
-        url = CONFIG.MANGABUDDY_API_CHAPTERS_DETAILS.format(name_seo)
-        soup = Crawler_Site().crawl_soup(url)
+        try:
+            url = CONFIG.MANGABUDDY_API_CHAPTERS_DETAILS.format(name_seo)
+            soup = Crawler().crawl_soup(url)
 
-        chapters = soup.find_all("li")
-        for chapter in chapters:
-            title = helper.format_chap_title(chapter.find("strong").text)
-            href = chapter.a.get("href")
-            title_seo = href.split("/")[-1]
+            chapters = soup.find_all("li")
+            for chapter in chapters:
+                title = helper.format_chap_title(chapter.find("strong").text)
+                href = chapter.a.get("href")
+                title_seo = href.split("/")[-1]
 
-            chapters_data.append([title, title_seo, href])
+                chapters_data.append([title, title_seo, href])
+        except Exception as e:
+            helper.error_log(
+                msg=f"Failed to get comic chapters with name seo: {name_seo}\n{e}",
+                filename="base.crawl_comic_chapters.log",
+            )
         return chapters_data
 
     def crawl_chap_images(
         self, comic_title: str, comic_seo: str, chap_seo: str, href: str
     ):
-        logging.info(f"Crawling {href}")
-
         soup = self.crawl_soup(href)
 
         images = []
@@ -164,76 +172,12 @@ class Crawler_Site:
 
     def crawl_comic_details(self, soup, comic_seo):
         comic_data = self.get_comic_details(soup, comic_seo)
-        comicTitle = helper.format_condition_str(comic_data["title"])
-        condition = f'post_title = "{comicTitle}"'
-        be_comic = database.select_all_from(
-            table=f"{CONFIG.TABLE_PREFIX}posts", condition=condition
-        )
-        if not be_comic:
-            comicId = helper.insert_comic(comic_data)
-        else:
-            comicId = be_comic[0][0]
-
-        be_chaps = database.select_all_from(
-            table=f"{CONFIG.TABLE_PREFIX}manga_chapters",
-            condition=f'post_id="{comicId}"',
-        )
+        comicId = MangaReaderComic(comic_data).insert_comic()
 
         chaps_data = self.crawl_comic_chapters(name_seo=comic_seo)
-
-        new_chaps = helper.get_new_chaps(chaps_data, be_chaps)
-
-        newChapsCount = len(new_chaps)
-        for i in range(newChapsCount - 1, 0, -1):
-            chap = new_chaps[i]
-            href = chap[2]
-            if "http" not in href:
-                href = CONFIG.MANGABUDDY_HOMEPAGE + href
-            try:
-                content = self.crawl_chap_images(
-                    comicTitle, slugify(comicTitle), chap[1], href
-                )
-
-                if not content:
-                    continue
-
-                try:
-                    chap_data = [*chap, comicId, content]
-                    helper.insert_chap(chap_data)
-
-                    try:
-                        helper.update_comic_timeupdate(comicId)
-                    except Exception as e:
-                        helper.error_log(
-                            f"Failed to update comic timeupdate\n{e}",
-                            filename="base.update_comic_time.log",
-                        )
-
-                    try:
-                        # Send noti to discord channel
-                        chapTitle = chap[0]
-                        msg = f"[NEW] {comicTitle} - {chapTitle}"
-                        Noti(msg).send()
-                    except Exception as e:
-                        helper.error_log(
-                            f"Failed to send notification\n{e}",
-                            filename="base.send_noti.log",
-                        )
-
-                except Exception as e:
-                    helper.error_log(
-                        f"Failed to insert chapter\n{e}",
-                        filename="base.insert_chapter.log",
-                    )
-
-                time.sleep(CONFIG.WAIT_BETWEEN_CHAPTER)
-            except Exception as e:
-                helper.error_log(
-                    f"Failed to crawl images\n{href}", filename="base.crawl_images.log"
-                )
+        MangaReaderChapter(comicId, comic_data["title"], chaps_data).insert_chapters()
 
     def crawl_comic(self, src):
-        logging.info(f"Crawling {src}")
         # try:
         soup = self.crawl_soup(src)
         slug = src.split("/")[-1]
@@ -247,16 +191,17 @@ class Crawler_Site:
         #     )
 
     def crawl_page(self, url):
-        logging.info(f"Crawling {url}")
         soup = self.crawl_soup(url)
+        if soup == 404:
+            return 0
 
         section = soup.find("div", class_="section-body")
         if not section:
-            return
+            return 0
 
         items = section.find_all("div", class_="book-item")
         if not items:
-            return
+            return 0
 
         for item in items:
             try:
@@ -278,7 +223,9 @@ class Crawler_Site:
                 self.crawl_comic(src)
 
             except Exception as e:
-                raise e
+                helper.error_log(msg=f"Failed in page: {url}\nItem{item}\n{e}")
+
+        return 1
 
     def verify_domain(self, url):
         try:
@@ -291,4 +238,4 @@ class Crawler_Site:
 
 
 if __name__ == "__main__":
-    Crawler_Site().crawl_comic("https://mangabuddy.com/cases-of-judge-zhang")
+    Crawler().crawl_comic("https://mangabuddy.com/happy-negative-marriage")
