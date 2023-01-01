@@ -69,6 +69,8 @@ class Helper:
         if isThumb:
             saveImage = f"{CONFIG.THUMB_SAVE_PATH}/{imageName}"
 
+        saveImage = saveImage.replace("\\\\", "\\")
+
         isNotSaved = not Path(saveImage).is_file()
         if overwrite or isNotSaved:
             image = self.download_url(imageUrl)
