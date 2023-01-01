@@ -8,7 +8,7 @@ from slugify import slugify
 
 
 from _db import database
-from _image import combine_image, convert_image_to_jpg
+from _image import convert_image_to_jpg
 
 logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=logging.INFO)
 # from generate_chapter_number import get_chapter_number_from
@@ -107,17 +107,7 @@ class Helper:
                         imageUrl, comic_seo, chap_seo, imageName, overwrite=True
                     )
                     self.convert_image(savedImage, convertAnyway=True)
-                    try:
-                        if i == 0:
-                            combine_image(savedImage)
 
-                        if i == imagesCount - 1:
-                            combine_image(savedImage, isLastImg=True)
-                    except Exception as e:
-                        self.error_log(
-                            f"Failed to combine image\n{savedImage}",
-                            filename="helper.combine_image.log",
-                        )
                 else:
                     savedImage, isNotSaved = self.save_image(
                         imageUrl, comic_seo, chap_seo, imageName
