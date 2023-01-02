@@ -20,6 +20,7 @@ class Database:
             sys.exit(1)
 
     def select_all_from(self, table: str, condition: str = "1=1", cols: str = "*"):
+        condition = condition.replace("'", "''")
         conn = self.get_conn()
         cur = conn.cursor()
         cur.execute(f"SELECT {cols} FROM {table} WHERE {condition}")
@@ -30,6 +31,7 @@ class Database:
         return res
 
     def insert_into(self, table: str, data: tuple = None):
+        data = (x.replace("'", "''") for x in data)
         conn = self.get_conn()
         cur = conn.cursor()
 
@@ -45,6 +47,7 @@ class Database:
         return id
 
     def update_table(self, table: str, set_cond: str, where_cond: str, data: set):
+        data = (x.replace("'", "''") for x in data)
         conn = self.get_conn()
         cur = conn.cursor()
         cur.execute(f"UPDATE {table} SET {set_cond} WHERE {where_cond}", data)

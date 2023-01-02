@@ -238,4 +238,4 @@ class Crawler:
 
 
 if __name__ == "__main__":
-    Crawler().crawl_comic("https://mangabuddy.com/happy-negative-marriage")
+    Crawler().crawl_comic("https://mangabuddy.com/dragon-prisoner")
