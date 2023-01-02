@@ -346,7 +346,7 @@ class MangaReaderChapter:
         try:
             term_id = database.select_all_from(
                 table=f"{CONFIG.TABLE_PREFIX}terms",
-                condition=f"name='{self.comicTitle}'",
+                condition=f'name="{self.comicTitle}"',
                 cols="term_id",
             )[0][0]
             database.insert_into(
