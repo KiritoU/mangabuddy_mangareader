@@ -118,7 +118,7 @@ class Helper:
 
                 imgSrc = self.generate_img_src(savedImage)
                 res.append(
-                    f"""<img src="{CONFIG.IMAGE_DOMAIN}{imgSrc}" alt="" class="alignnone size-full" />"""
+                    f"""<img src="{CONFIG.IMAGE_DOMAIN}/{imgSrc}" alt="" class="alignnone size-full" />"""
                 )
             except Exception as e:
                 self.error_log(
