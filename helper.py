@@ -86,9 +86,15 @@ class Helper:
         return imgSrc
 
     def convert_image(self, savedImage: str, convertAnyway: bool = False):
-        imageExtension = savedImage.split(".")[-1]
-        if convertAnyway or imageExtension != "jpg":
-            convert_image_to_jpg(savedImage)
+        try:
+            imageExtension = savedImage.split(".")[-1]
+            if convertAnyway or imageExtension != "jpg":
+                convert_image_to_jpg(savedImage)
+        except Exception as e:
+            self.error_log(
+                msg=f"Could not convert image: {savedImage}\n{e}",
+                filename="helper.conver_image.log",
+            )
 
     def download_images(self, comic_seo: str, chap_seo: str, imageUrls: list):
         res = []

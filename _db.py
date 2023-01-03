@@ -34,7 +34,9 @@ class Database:
         res = []
         for x in data:
             if isinstance(x, str):
-                res.append(x.replace("'", "''"))
+                x_append = x.replace("&#39", "'")
+                x_append = x_append.replace("'", "''")
+                res.append(x_append)
             else:
                 res.append(x)
 
