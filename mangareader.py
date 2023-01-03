@@ -86,7 +86,7 @@ class MangaReaderComic:
             if not be_term:
                 term_id = database.insert_into(
                     table=f"{CONFIG.TABLE_PREFIX}terms",
-                    data=(term, slugify(term), 0),
+                    data=(term, slugify(term.replace("&#39", "'")), 0),
                 )
                 term_taxonomy_id = database.insert_into(
                     table=f"{CONFIG.TABLE_PREFIX}term_taxonomy",
@@ -207,9 +207,12 @@ class MangaReaderComic:
         self.insert_terms(
             comicId, [category[0] for category in self.comic["categories"]], "genres"
         )
-        self.insert_terms(comicId, [self.comic["title"]], "category")
 
-        return comicId
+        titleTermTaxonomyId = self.insert_terms(
+            comicId, [self.comic["title"]], "category"
+        )
+
+        return comicId, titleTermTaxonomyId
 
     def insert_comic(self):
         comicTitle = self.format_condition_str(self.comic["title"])
@@ -218,17 +221,28 @@ class MangaReaderComic:
             table=f"{CONFIG.TABLE_PREFIX}posts", condition=condition
         )
         if not be_comic:
-            comicId = self.insert_comic_into_database()
+            comicId, titleTermTaxonomyId = self.insert_comic_into_database()
         else:
+            cols = "tt.term_taxonomy_id"
+            table = (
+                f"{CONFIG.TABLE_PREFIX}term_taxonomy tt, {CONFIG.TABLE_PREFIX}terms t"
+            )
+            condition = f't.name = "{self.comicTitle}" AND tt.term_id=t.term_id'
+            titleTermTaxonomyId = database.select_all_from(
+                table=table,
+                condition=condition,
+                cols=cols,
+            )[0][0]
             comicId = be_comic[0][0]
 
-        return comicId
+        return comicId, titleTermTaxonomyId
 
 
 @dataclass
 class MangaReaderChapter:
     comicId: str
     comicTitle: str
+    titleTermTaxonomyId: str
     chapters: list
 
     def crawl_chap_images(
@@ -344,14 +358,9 @@ class MangaReaderChapter:
 
     def insert_comic_category_for_chapter(self, chapterId: str):
         try:
-            term_id = database.select_all_from(
-                table=f"{CONFIG.TABLE_PREFIX}terms",
-                condition=f'name="{self.comicTitle}"',
-                cols="term_id",
-            )[0][0]
             database.insert_into(
                 table=f"{CONFIG.TABLE_PREFIX}term_relationships",
-                data=(chapterId, term_id, 0),
+                data=(chapterId, self.titleTermTaxonomyId, 0),
             )
         except Exception as e:
             helper.error_log(
