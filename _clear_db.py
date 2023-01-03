@@ -14,7 +14,7 @@ def delete_saved_images():
     logging.info("Deleting saved images")
     files = os.listdir(CONFIG.IMAGE_SAVE_PATH)
     for file in files:
-        path = f"{CONFIG.IMAGE_SAVE_PATH}{file}"
+        path = f"{CONFIG.IMAGE_SAVE_PATH}/{file}"
         if os.path.isdir(path):
             shutil.rmtree(path)
 

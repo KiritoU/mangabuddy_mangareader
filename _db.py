@@ -20,7 +20,7 @@ class Database:
             sys.exit(1)
 
     def select_all_from(self, table: str, condition: str = "1=1", cols: str = "*"):
-        # condition = condition.replace("'", "''")
+        condition = condition.replace("&#39", "'")
         conn = self.get_conn()
         cur = conn.cursor()
         cur.execute(f"SELECT {cols} FROM {table} WHERE {condition}")

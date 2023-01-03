@@ -208,7 +208,11 @@ class Crawler:
                 src = ""
 
                 thumb = item.find("div", class_="thumb")
-                if thumb and thumb.find("a") and thumb.find("a").get("href"):
+                if (
+                    isinstance(thumb, BeautifulSoup)
+                    and thumb.find("a")
+                    and thumb.find("a").get("href")
+                ):
                     src = thumb.find("a").get("href")
                 else:
                     title = item.find("div", class_="title")
