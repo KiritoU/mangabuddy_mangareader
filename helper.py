@@ -86,6 +86,7 @@ class Helper:
         return imgSrc
 
     def convert_image(self, savedImage: str, convertAnyway: bool = False):
+        return
         try:
             imageExtension = savedImage.split(".")[-1]
             if convertAnyway or imageExtension != "jpg":

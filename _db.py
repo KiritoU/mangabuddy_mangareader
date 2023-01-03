@@ -20,7 +20,7 @@ class Database:
             sys.exit(1)
 
     def select_all_from(self, table: str, condition: str = "1=1", cols: str = "*"):
-        condition = condition.replace("'", "''")
+        # condition = condition.replace("'", "''")
         conn = self.get_conn()
         cur = conn.cursor()
         cur.execute(f"SELECT {cols} FROM {table} WHERE {condition}")
@@ -35,7 +35,7 @@ class Database:
         for x in data:
             if isinstance(x, str):
                 x_append = x.replace("&#39", "'")
-                x_append = x_append.replace("'", "''")
+                # x_append = x_append.replace("'", "''")
                 res.append(x_append)
             else:
                 res.append(x)
@@ -87,7 +87,7 @@ database = Database()
 
 
 if __name__ == "__main__":
-    comicTitle = "kahana no shou"
+    comicTitle = "Tit F'or Tat"
     condition = f'post_title = "{comicTitle}"'
     be_comic = database.select_all_from(
         table=f"{CONFIG.TABLE_PREFIX}posts", condition=condition
