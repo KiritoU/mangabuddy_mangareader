@@ -227,7 +227,7 @@ class MangaReaderComic:
             table = (
                 f"{CONFIG.TABLE_PREFIX}term_taxonomy tt, {CONFIG.TABLE_PREFIX}terms t"
             )
-            condition = f't.name = "{self.comicTitle}" AND tt.term_id=t.term_id'
+            condition = f't.name = "{comicTitle}" AND tt.term_id=t.term_id'
             titleTermTaxonomyId = database.select_all_from(
                 table=table,
                 condition=condition,
