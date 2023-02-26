@@ -1,4 +1,4 @@
-import mysql.connector
+from mysql.connector.pooling import MySQLConnectionPool
 import sys
 
 
@@ -6,9 +6,12 @@ from settings import CONFIG
 
 
 class Database:
-    def get_conn(self):
+    def __init__(self):
         try:
-            return mysql.connector.connect(
+            self.pool = MySQLConnectionPool(
+                pool_name="mypool",
+                pool_size=CONFIG.MAX_THREAD,
+                pool_reset_session=True,
                 user=CONFIG.user,
                 password=CONFIG.password,
                 host=CONFIG.host,
@@ -18,6 +21,9 @@ class Database:
         except Exception as e:
             print(f"Error connecting to MariaDB Platform: {e}")
             sys.exit(1)
+
+    def get_conn(self):
+        return self.pool.get_connection()
 
     def select_all_from(self, table: str, condition: str = "1=1", cols: str = "*"):
         condition = condition.replace("&#39", "'")

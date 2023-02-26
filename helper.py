@@ -61,7 +61,7 @@ class Helper:
         isThumb: bool = False,
         overwrite: bool = False,
     ) -> str:
-
+        imageUrl = imageUrl.replace("s1.mbcdnv1.xyz", "s1.mbbcdnv1.xyz")
         saveFullPath = f"{CONFIG.IMAGE_SAVE_PATH}/{comic_seo}/{chap_seo}"
         Path(saveFullPath).mkdir(parents=True, exist_ok=True)
         Path(CONFIG.THUMB_SAVE_PATH).mkdir(parents=True, exist_ok=True)
