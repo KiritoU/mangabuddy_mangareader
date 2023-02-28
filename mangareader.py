@@ -142,7 +142,7 @@ class MangaReaderComic:
                 table=f"{CONFIG.TABLE_PREFIX}posts", data=data
             )
         except Exception as e:
-            self.error_log(
+            helper.error_log(
                 msg=f"Failed to insert comic\n{e}", filename="helper.comicId.log"
             )
             return 0
@@ -305,7 +305,7 @@ class MangaReaderChapter:
                 table=f"{CONFIG.TABLE_PREFIX}posts", data=data
             )
         except Exception as e:
-            self.error_log(
+            helper.error_log(
                 msg=f"Failed to insert chapter\n{e}",
                 filename="mangareader.insert_chapter.log",
             )
