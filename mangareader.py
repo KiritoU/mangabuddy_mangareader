@@ -60,6 +60,9 @@ class MangaReaderComic:
         thumbId = database.insert_into(
             table=f"{CONFIG.TABLE_PREFIX}posts", data=thumbPostData
         )
+        if not thumbId:
+            return 0
+
         database.insert_into(
             table=f"{CONFIG.TABLE_PREFIX}postmeta",
             data=(thumbId, "_wp_attached_file", thumbSavePath),
@@ -83,17 +86,22 @@ class MangaReaderComic:
             be_term = database.select_all_from(
                 table=table, condition=condition, cols=cols
             )
-            if not be_term:
-                term_id = database.insert_into(
-                    table=f"{CONFIG.TABLE_PREFIX}terms",
-                    data=(term, slugify(term.replace("&#39", "'")), 0),
-                )
-                term_taxonomy_id = database.insert_into(
-                    table=f"{CONFIG.TABLE_PREFIX}term_taxonomy",
-                    data=(term_id, taxonomy, "", 0, 0),
-                )
-            else:
-                term_taxonomy_id = be_term[0][0]
+            try:
+                if not be_term:
+                    term_id = database.insert_into(
+                        table=f"{CONFIG.TABLE_PREFIX}terms",
+                        data=(term, slugify(term.replace("&#39", "'")), 0),
+                    )
+
+                    term_taxonomy_id = database.insert_into(
+                        table=f"{CONFIG.TABLE_PREFIX}term_taxonomy",
+                        data=(term_id, taxonomy, "", 0, 0),
+                    )
+
+                else:
+                    term_taxonomy_id = be_term[0][0]
+            except:
+                term_taxonomy_id = 0
 
             resTermId = term_taxonomy_id
 
@@ -147,61 +155,28 @@ class MangaReaderComic:
             )
             return 0
 
+        if not comicId:
+            return 0
+
+        postmeta_data = [
+            (comicId, "_edit_last", "1"),
+            (comicId, "_edit_lock", f"{int(datetime.now().timestamp())}:1"),
+            (comicId, "ero_autogenerateimgcat", "1"),
+            (comicId, "ero_slider", "0"),
+            (comicId, "ero_hot", "0"),
+            (comicId, "ero_project", "0"),
+            (comicId, "ero_colored", "default"),
+            (comicId, "iddb", ""),
+            (comicId, "_thumbnail_id", thumbId),
+            (comicId, "ero_latest", "\{\}"),
+            (comicId, "ero_status", self.comic["status"]),
+            (comicId, "ero_type", "Manga"),
+            (comicId, "ero_author", ", ".join(self.comic["authors"])),
+            (comicId, "ero_japanese", self.comic["alternative"]),
+        ]
+
         database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "_edit_last", "1"),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "_edit_lock", f"{int(datetime.now().timestamp())}:1"),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "ero_autogenerateimgcat", "1"),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "ero_slider", "0"),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "ero_hot", "0"),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "ero_project", "0"),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "ero_colored", "default"),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "iddb", ""),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "_thumbnail_id", thumbId),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "ero_latest", "\{\}"),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "ero_status", self.comic["status"]),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "ero_type", "Manga"),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "ero_author", ", ".join(self.comic["authors"])),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(comicId, "ero_japanese", self.comic["alternative"]),
+            table=f"{CONFIG.TABLE_PREFIX}postmeta", data=postmeta_data, is_bulk=True
         )
 
         self.insert_terms(
@@ -228,12 +203,19 @@ class MangaReaderComic:
                 f"{CONFIG.TABLE_PREFIX}term_taxonomy tt, {CONFIG.TABLE_PREFIX}terms t"
             )
             condition = f't.name = "{comicTitle}" AND tt.term_id=t.term_id'
-            titleTermTaxonomyId = database.select_all_from(
-                table=table,
-                condition=condition,
-                cols=cols,
-            )[0][0]
-            comicId = be_comic[0][0]
+            try:
+                titleTermTaxonomyId = database.select_all_from(
+                    table=table,
+                    condition=condition,
+                    cols=cols,
+                )[0][0]
+            except:
+                titleTermTaxonomyId = 0
+
+            try:
+                comicId = be_comic[0][0]
+            except:
+                comicId = 0
 
         return comicId, titleTermTaxonomyId
 
@@ -311,29 +293,23 @@ class MangaReaderChapter:
             )
             return 0
 
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(chapterId, "_edit_last", "1"),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(chapterId, "_edit_lock", f"{int(datetime.now().timestamp())}:1"),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(chapterId, "ero_chapter", chapter_data[-2]),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(chapterId, "ero_seri", chapter_data[-3]),
-        )
-        database.insert_into(
-            table=f"{CONFIG.TABLE_PREFIX}postmeta",
-            data=(
+        if not chapterId:
+            return 0
+
+        chapter_postmeta = [
+            (chapterId, "_edit_last", "1"),
+            (chapterId, "_edit_lock", f"{int(datetime.now().timestamp())}:1"),
+            (chapterId, "ero_chapter", chapter_data[-2]),
+            (chapterId, "ero_seri", chapter_data[-3]),
+            (
                 chapterId,
                 "ab_embedgroup",
                 'a:1:{i:0;a:1:{s:6:"_state";s:8:"expanded";}}',
             ),
+        ]
+
+        database.insert_into(
+            table=f"{CONFIG.TABLE_PREFIX}postmeta", data=chapter_postmeta, is_bulk=True
         )
 
         return chapterId
@@ -358,10 +334,11 @@ class MangaReaderChapter:
 
     def insert_comic_category_for_chapter(self, chapterId: str):
         try:
-            database.insert_into(
-                table=f"{CONFIG.TABLE_PREFIX}term_relationships",
-                data=(chapterId, self.titleTermTaxonomyId, 0),
-            )
+            if self.titleTermTaxonomyId:
+                database.insert_into(
+                    table=f"{CONFIG.TABLE_PREFIX}term_relationships",
+                    data=(chapterId, self.titleTermTaxonomyId, 0),
+                )
         except Exception as e:
             helper.error_log(
                 msg=f"Failed to insert_comic_category_for_chapter\n{chapterId}\n{e}",
@@ -369,6 +346,9 @@ class MangaReaderChapter:
             )
 
     def insert_chapters(self):
+        if not self.comicId:
+            return
+
         self.chapters.reverse()
         for i, chap in enumerate(self.chapters):
             chap[0] = f"{self.comicTitle} {chap[0]}"

@@ -1,6 +1,6 @@
 from mysql.connector.pooling import MySQLConnectionPool
 import sys
-
+from pathlib import Path
 
 from settings import CONFIG
 
@@ -36,28 +36,42 @@ class Database:
 
         return res
 
-    def format_data(self, data) -> list:
-        res = []
-        for x in data:
-            if isinstance(x, str):
-                x_append = x.replace("&#39", "'")
-                # x_append = x_append.replace("'", "''")
-                res.append(x_append)
-            else:
-                res.append(x)
+    def format_data_by_row(self, row: list) -> list:
+        tmp = []
+        for cell in row:
+            if isinstance(cell, str):
+                cell = cell.replace("&#39", "'")
 
-        return res
+            tmp.append(cell)
 
-    def insert_into(self, table: str, data: tuple = None):
-        data = self.format_data(data)
+        return tmp
+
+    def format_data(self, datas, is_bulk: bool = False) -> list:
+        if not is_bulk:
+            return self.format_data_by_row(datas)
+
+        return [self.format_data_by_row(row) for row in datas]
+
+    def insert_into(self, table: str, data: tuple = None, is_bulk: bool = False):
+        data = self.format_data(data, is_bulk)
         conn = self.get_conn()
         cur = conn.cursor()
 
         columns = f"({', '.join(CONFIG.INSERT[table])})"
         values = f"({', '.join(['%s'] * len(CONFIG.INSERT[table]))})"
         query = f"INSERT INTO {table} {columns} VALUES {values}"
-        cur.execute(query, data)
-        id = cur.lastrowid
+        try:
+            if is_bulk:
+                cur.executemany(query, data)
+            else:
+                cur.execute(query, data)
+            id = cur.lastrowid
+        except Exception as e:
+            self.error_log(
+                msg=f"Insert into {table} {'with is_bulk' if is_bulk else ''} failed\n{data}",
+                filename="_db.insert_into.log",
+            )
+            id = 0
 
         conn.commit()
         cur.close()
@@ -68,7 +82,13 @@ class Database:
         data = self.format_data(data)
         conn = self.get_conn()
         cur = conn.cursor()
-        cur.execute(f"UPDATE {table} SET {set_cond} WHERE {where_cond}", data)
+        try:
+            cur.execute(f"UPDATE {table} SET {set_cond} WHERE {where_cond}", data)
+        except Exception as e:
+            self.error_log(
+                msg=f"Update {table} failed\n{set_cond}\n{where_cond}\n{data}",
+                filename="_db.update_table.log",
+            )
         conn.commit()
         cur.close()
         conn.close()
@@ -87,6 +107,11 @@ class Database:
             self.insert_into(table, data)
             res = self.select_all_from(table, condition=condition)
         return res
+
+    def error_log(self, msg, filename: str = "failed.txt"):
+        Path("log").mkdir(parents=True, exist_ok=True)
+        with open(f"log/{filename}", "a") as f:
+            print(f"{msg}\n{'-' * 80}", file=f)
 
 
 database = Database()
