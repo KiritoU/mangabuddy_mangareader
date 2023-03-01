@@ -10,7 +10,7 @@ class Database:
         try:
             self.pool = MySQLConnectionPool(
                 pool_name="mypool",
-                pool_size=CONFIG.MAX_THREAD,
+                pool_size=min(32, CONFIG.MAX_THREAD + 2),
                 pool_reset_session=True,
                 user=CONFIG.user,
                 password=CONFIG.password,

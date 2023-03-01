@@ -10,7 +10,7 @@ logging.basicConfig(format="%(asctime)s %(levelname)s:%(message)s", level=loggin
 crawler = Crawler()
 
 if __name__ == "__main__":
-    page = 2
+    page = 1
     while True:
         if threading.active_count() > CONFIG.MAX_THREAD:
             continue
