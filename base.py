@@ -173,6 +173,8 @@ class Crawler:
     def crawl_comic_details(self, soup, comic_seo):
         comic_data = self.get_comic_details(soup, comic_seo)
         comicId, titleTermTaxonomyId = MangaReaderComic(comic_data).insert_comic()
+        if not comicId:
+            return
 
         chaps_data = self.crawl_comic_chapters(name_seo=comic_seo)
         MangaReaderChapter(

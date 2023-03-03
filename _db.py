@@ -26,15 +26,22 @@ class Database:
         return self.pool.get_connection()
 
     def select_all_from(self, table: str, condition: str = "1=1", cols: str = "*"):
-        condition = condition.replace("&#39", "'")
-        conn = self.get_conn()
-        cur = conn.cursor()
-        cur.execute(f"SELECT {cols} FROM {table} WHERE {condition}")
-        res = cur.fetchall()
-        cur.close()
-        conn.close()
+        try:
+            condition = condition.replace("&#39", "'")
+            conn = self.get_conn()
+            cur = conn.cursor()
+            cur.execute(f"SELECT {cols} FROM {table} WHERE {condition}")
+            res = cur.fetchall()
+            cur.close()
+            conn.close()
 
-        return res
+            return res
+        except:
+            self.error_log(
+                msg=f"Select from {table} failed\n{condition}",
+                filename="_db.select_all_from.log",
+            )
+            return ""
 
     def format_data_by_row(self, row: list) -> list:
         tmp = []
@@ -53,18 +60,23 @@ class Database:
         return [self.format_data_by_row(row) for row in datas]
 
     def insert_into(self, table: str, data: tuple = None, is_bulk: bool = False):
-        data = self.format_data(data, is_bulk)
-        conn = self.get_conn()
-        cur = conn.cursor()
-
-        columns = f"({', '.join(CONFIG.INSERT[table])})"
-        values = f"({', '.join(['%s'] * len(CONFIG.INSERT[table]))})"
-        query = f"INSERT INTO {table} {columns} VALUES {values}"
         try:
+            data = self.format_data(data, is_bulk)
+            conn = self.get_conn()
+            cur = conn.cursor()
+
+            columns = f"({', '.join(CONFIG.INSERT[table])})"
+            values = f"({', '.join(['%s'] * len(CONFIG.INSERT[table]))})"
+            query = f"INSERT INTO {table} {columns} VALUES {values}"
             if is_bulk:
                 cur.executemany(query, data)
             else:
                 cur.execute(query, data)
+
+            conn.commit()
+            cur.close()
+            conn.close()
+
             id = cur.lastrowid
         except Exception as e:
             self.error_log(
@@ -73,9 +85,6 @@ class Database:
             )
             id = 0
 
-        conn.commit()
-        cur.close()
-        conn.close()
         return id
 
     def update_table(self, table: str, set_cond: str, where_cond: str, data: set):

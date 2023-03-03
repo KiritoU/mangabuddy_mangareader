@@ -71,7 +71,7 @@ class MangaReaderComic:
         return thumbId
 
     def format_condition_str(self, equal_condition: str) -> str:
-        return equal_condition.strip("\n").strip().lower()
+        return equal_condition.replace("&#39", "'").strip("\n").strip().lower()
 
     def insert_terms(self, post_id: int, terms: list, taxonomy: str):
         resTermId = 0
@@ -90,7 +90,7 @@ class MangaReaderComic:
                 if not be_term:
                     term_id = database.insert_into(
                         table=f"{CONFIG.TABLE_PREFIX}terms",
-                        data=(term, slugify(term.replace("&#39", "'")), 0),
+                        data=(term_name, slugify(term_name), 0),
                     )
 
                     term_taxonomy_id = database.insert_into(
@@ -195,6 +195,9 @@ class MangaReaderComic:
         be_comic = database.select_all_from(
             table=f"{CONFIG.TABLE_PREFIX}posts", condition=condition
         )
+        if be_comic == "":
+            return 0, 0
+
         if not be_comic:
             comicId, titleTermTaxonomyId = self.insert_comic_into_database()
         else:
@@ -357,7 +360,7 @@ class MangaReaderChapter:
                 table=f"{CONFIG.TABLE_PREFIX}posts",
                 condition=f'post_title="{chapter_title}" AND post_type="post"',
             )
-            if isExistChapter:
+            if isExistChapter or isExistChapter == "":
                 continue
 
             href = chap[2]
