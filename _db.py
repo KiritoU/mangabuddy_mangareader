@@ -36,9 +36,9 @@ class Database:
             conn.close()
 
             return res
-        except:
+        except Exception as e:
             self.error_log(
-                msg=f"Select from {table} failed\n{condition}",
+                msg=f"Select from {table} failed\n{condition}\n{e}",
                 filename="_db.select_all_from.log",
             )
             return ""
@@ -80,7 +80,7 @@ class Database:
             id = cur.lastrowid
         except Exception as e:
             self.error_log(
-                msg=f"Insert into {table} {'with is_bulk' if is_bulk else ''} failed\n{data}",
+                msg=f"Insert into {table} {'with is_bulk' if is_bulk else ''} failed\n{e}",
                 filename="_db.insert_into.log",
             )
             id = 0
