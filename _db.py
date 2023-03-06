@@ -26,22 +26,23 @@ class Database:
         return self.pool.get_connection()
 
     def select_all_from(self, table: str, condition: str = "1=1", cols: str = "*"):
+        res = ""
+        condition = condition.replace("&#39", "'")
+        conn = self.get_conn()
+        cur = conn.cursor()
         try:
-            condition = condition.replace("&#39", "'")
-            conn = self.get_conn()
-            cur = conn.cursor()
             cur.execute(f"SELECT {cols} FROM {table} WHERE {condition}")
             res = cur.fetchall()
-            cur.close()
-            conn.close()
 
-            return res
         except Exception as e:
             self.error_log(
                 msg=f"Select from {table} failed\n{condition}\n{e}",
                 filename="_db.select_all_from.log",
             )
-            return ""
+
+        cur.close()
+        conn.close()
+        return res
 
     def format_data_by_row(self, row: list) -> list:
         tmp = []
@@ -60,11 +61,12 @@ class Database:
         return [self.format_data_by_row(row) for row in datas]
 
     def insert_into(self, table: str, data: tuple = None, is_bulk: bool = False):
-        try:
-            data = self.format_data(data, is_bulk)
-            conn = self.get_conn()
-            cur = conn.cursor()
+        data = self.format_data(data, is_bulk)
+        conn = self.get_conn()
+        cur = conn.cursor()
 
+        id = 0
+        try:
             columns = f"({', '.join(CONFIG.INSERT[table])})"
             values = f"({', '.join(['%s'] * len(CONFIG.INSERT[table]))})"
             query = f"INSERT INTO {table} {columns} VALUES {values}"
@@ -74,8 +76,6 @@ class Database:
                 cur.execute(query, data)
 
             conn.commit()
-            cur.close()
-            conn.close()
 
             id = cur.lastrowid
         except Exception as e:
@@ -83,7 +83,9 @@ class Database:
                 msg=f"Insert into {table} {'with is_bulk' if is_bulk else ''} failed\n{e}",
                 filename="_db.insert_into.log",
             )
-            id = 0
+
+        cur.close()
+        conn.close()
 
         return id
 
