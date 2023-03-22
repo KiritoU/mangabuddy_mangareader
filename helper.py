@@ -104,10 +104,10 @@ class Helper:
             try:
                 imageUrl = imageUrls[i]
                 if "_" in imageUrl:
-                    imageName = imageUrl.split("_")[-1]
+                    imageName = imageUrl.split("?")[0].split("_")[-1]
                 else:
-                    imageName = imageUrl.split("/")[-1]
-                imageUrl = f"https://s1.mbcdnv1.xyz/file/img-mbuddy/manga/{imageUrl}"
+                    imageName = imageUrl.split("?")[0].split("/")[-1]
+                # imageUrl = f"https://s1.mbcdnv1.xyz/file/img-mbuddy/manga/{imageUrl}"
 
                 if i == 0 or i == imagesCount - 1:
                     savedImage, isNotSaved = self.save_image(
@@ -156,7 +156,6 @@ class Helper:
         # return "%" + equal_condition.strip().replace(" ", "%").lower() + "%"
 
     def insert_author(self, comicId: int, authors: list):
-
         for author in authors:
             authorName = self.format_condition_str(author[0])
             cols = "tt.term_taxonomy_id"

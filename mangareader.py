@@ -248,7 +248,7 @@ class MangaReaderChapter:
                 or slugify(comic_title.replace("'", "")) in script.text
                 or comic_seo in script.text
             ):
-                removeTexts = ["\n", "var", "chapImages", "=", "'"]
+                removeTexts = ["\n", "var", "chapImages =", "'"]
                 links = script.text
                 for removeText in removeTexts:
                     links = links.replace(removeText, "")
