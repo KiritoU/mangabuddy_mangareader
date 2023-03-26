@@ -372,6 +372,7 @@ class MangaReaderChapter:
                 )
 
                 if not content:
+                    print("No content")
                     continue
 
                 try:
