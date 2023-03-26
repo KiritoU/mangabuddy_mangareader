@@ -103,10 +103,11 @@ class Helper:
         for i in range(imagesCount):
             try:
                 imageUrl = imageUrls[i]
-                if "_" in imageUrl:
-                    imageName = imageUrl.split("?")[0].split("_")[-1]
+                imageName = imageUrl.split("?")[0]
+                if "_" in imageName:
+                    imageName = imageName.split("_")[-1]
                 else:
-                    imageName = imageUrl.split("?")[0].split("/")[-1]
+                    imageName = imageName.split("/")[-1]
                 # imageUrl = f"https://s1.mbcdnv1.xyz/file/img-mbuddy/manga/{imageUrl}"
 
                 if i == 0 or i == imagesCount - 1:
