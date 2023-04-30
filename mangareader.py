@@ -75,7 +75,7 @@ class MangaReaderComic:
             equal_condition.replace("&#39", "'").replace('"', "'").strip("\n").strip()
         )
 
-    def insert_terms(self, post_id: int, terms: list, taxonomy: str):
+    def insert_terms(self, post_id: int, terms: list, taxonomy: str, count: int = 0):
         resTermId = 0
         for term in terms:
             term_name = self.format_condition_str(term)
@@ -97,7 +97,7 @@ class MangaReaderComic:
 
                     term_taxonomy_id = database.insert_into(
                         table=f"{CONFIG.TABLE_PREFIX}term_taxonomy",
-                        data=(term_id, taxonomy, "", 0, 0),
+                        data=(term_id, taxonomy, "", 0, count),
                     )
 
                 else:
@@ -189,7 +189,7 @@ class MangaReaderComic:
         )
 
         titleTermTaxonomyId = self.insert_terms(
-            comicId, [self.comic["title"]], "category"
+            comicId, [self.comic["title"]], "category", count=1
         )
 
         return comicId, titleTermTaxonomyId
