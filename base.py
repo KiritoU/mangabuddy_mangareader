@@ -133,8 +133,8 @@ class Crawler:
         try:
             url = CONFIG.MANGABUDDY_API_CHAPTERS_DETAILS.format(name_seo)
             soup = Crawler().crawl_soup(url)
-            with open("test_chapter_api.html", "w") as f:
-                f.write(soup.prettify())
+            # with open("test_chapter_api.html", "w") as f:
+            #     f.write(soup.prettify())
 
             chapters = soup.find_all("li")
             for chapter in chapters:
