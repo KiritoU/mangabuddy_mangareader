@@ -71,7 +71,9 @@ class MangaReaderComic:
         return thumbId
 
     def format_condition_str(self, equal_condition: str) -> str:
-        return equal_condition.replace("&#39", "'").strip("\n").strip().lower()
+        return (
+            equal_condition.replace("&#39", "'").replace('"', "'").strip("\n").strip()
+        )
 
     def insert_terms(self, post_id: int, terms: list, taxonomy: str):
         resTermId = 0
@@ -119,6 +121,9 @@ class MangaReaderComic:
         logging.info(f"Inserting comic {self.comic['title']} into database")
         thumbId = self.insert_thumb(self.comic["thumb"])
         timeupdate = get_timeupdate()
+        post_name = slugify(self.comic["title"])
+        if len(post_name) >= 200:
+            post_name = post_name[len(post_name) - 199 :]
         data = (
             0,
             timeupdate,
@@ -130,7 +135,7 @@ class MangaReaderComic:
             "open",
             "closed",
             "",
-            slugify(self.comic["title"]),
+            post_name,
             "",
             "",
             timeupdate,
@@ -231,7 +236,12 @@ class MangaReaderChapter:
     chapters: list
 
     def crawl_chap_images(
-        self, comic_title: str, comic_seo: str, chap_seo: str, href: str
+        self,
+        comic_title: str,
+        comic_seo: str,
+        chap_seo: str,
+        href: str,
+        comic_raw_slug: str,
     ):
         html = helper.download_url(href)
 
@@ -239,6 +249,8 @@ class MangaReaderChapter:
             return
 
         soup = BeautifulSoup(html.content, "html.parser")
+        # with open("test/chapter.html", "w") as f:
+        #     f.write(soup.prettify())
 
         images = []
         scripts = soup.find_all("script")
@@ -247,6 +259,7 @@ class MangaReaderChapter:
                 slugify(comic_title.replace("&#39", "’")) in script.text
                 or slugify(comic_title.replace("'", "")) in script.text
                 or comic_seo in script.text
+                or comic_raw_slug in script.text
             ):
                 removeTexts = ["\n", "var", "chapImages =", "'"]
                 links = script.text
@@ -367,8 +380,13 @@ class MangaReaderChapter:
             if "http" not in href:
                 href = CONFIG.MANGABUDDY_HOMEPAGE + href
             try:
+                comic_raw_slug = href.split("/")[-2]
                 content = self.crawl_chap_images(
-                    self.comicTitle, slugify(self.comicTitle), chap[1], href
+                    self.comicTitle,
+                    slugify(self.comicTitle),
+                    chap[1],
+                    href,
+                    comic_raw_slug,
                 )
 
                 if not content:
