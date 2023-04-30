@@ -195,8 +195,8 @@ class MangaReaderComic:
         return comicId, titleTermTaxonomyId
 
     def insert_comic(self):
-        comicTitle = self.format_condition_str(self.comic["title"])
-        condition = f'post_title = "{comicTitle}" AND post_type="manga"'
+        post_name = slugify(self.comic["title"])
+        condition = f'post_name = "{post_name}" AND post_type="manga"'
         be_comic = database.select_all_from(
             table=f"{CONFIG.TABLE_PREFIX}posts", condition=condition
         )
@@ -210,7 +210,7 @@ class MangaReaderComic:
             table = (
                 f"{CONFIG.TABLE_PREFIX}term_taxonomy tt, {CONFIG.TABLE_PREFIX}terms t"
             )
-            condition = f't.name = "{comicTitle}" AND tt.term_id=t.term_id'
+            condition = f't.slug = "{post_name}" AND tt.term_id=t.term_id'
             try:
                 titleTermTaxonomyId = database.select_all_from(
                     table=table,
@@ -369,9 +369,10 @@ class MangaReaderChapter:
         for i, chap in enumerate(self.chapters):
             chap[0] = f"{self.comicTitle} {chap[0]}"
             chapter_title = chap[0]
+            post_name = slugify(chapter_title)
             isExistChapter = database.select_all_from(
                 table=f"{CONFIG.TABLE_PREFIX}posts",
-                condition=f'post_title="{chapter_title}" AND post_type="post"',
+                condition=f'post_name="{post_name}" AND post_type="post"',
             )
             if isExistChapter or isExistChapter == "":
                 continue
