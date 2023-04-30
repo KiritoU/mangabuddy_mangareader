@@ -95,5 +95,22 @@ def main():
         )
 
 
+def remove_manga_with_slug():
+    slugs = ["the-duke-39s-teddy-bear", "the-dukes-teddy-bear"]
+    for slug in slugs:
+        post_ids = database.select_all_from(
+            table=f"{CONFIG.TABLE_PREFIX}posts",
+            condition=f'post_name LIKE "%{slug}%"',
+            cols="ID",
+        )
+        post_ids = [x[0] for x in post_ids]
+        for post_id in post_ids:
+            database.delete_from(
+                table=f"{CONFIG.TABLE_PREFIX}posts",
+                condition=f'ID="{post_id}"',
+            )
+
+
 if __name__ == "__main__":
-    main()
+    remove_manga_with_slug()
+    # main()
